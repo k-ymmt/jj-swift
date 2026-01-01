@@ -62,7 +62,7 @@ version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40c48f72fd53cd289104fc64099abca73db4166ad86ea0b4341abe65af83dadc"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -73,7 +73,7 @@ checksum = "291e6a250ff86cd4a820112fb8898808a366d8f9f58ce16d1f538353ad55747d"
 dependencies = [
  "anstyle",
  "once_cell_polyfill",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1571,6 +1571,8 @@ dependencies = [
 [[package]]
 name = "jj-lib"
 version = "0.36.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e5b2eae11fafe0481757defbe67d7880e44d020e313ad84f6257a69027ad2ca"
 dependencies = [
  "async-trait",
  "blake2",
@@ -1617,6 +1619,8 @@ dependencies = [
 [[package]]
 name = "jj-lib-proc-macros"
 version = "0.36.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d377e171e3b27a96abf2f8a1de7368ce46d97624fbf557d82d43d9be5c1e7135"
 dependencies = [
  "proc-macro2",
  "quote",

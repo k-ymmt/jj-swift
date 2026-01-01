@@ -13,10 +13,18 @@ let package = Package(
         ),
     ],
     targets: [
-        // Build Tool Plugin
         .plugin(
             name: "BuildFFI",
-            capability: .buildTool(),
+            capability: .command(
+                intent: .custom(
+                    verb: "cargo_build",
+                    description: "build ffi library with cargo."
+                ),
+                permissions: [
+                    .allowNetworkConnections(scope: .all(ports: [80, 443]), reason: "fetch cargo dependencies."),
+                    .writeToPackageDirectory(reason: "write build artifacts"),
+                ],
+            ),
             path: "Plugins/BuildFFI"
         ),
 
@@ -41,7 +49,6 @@ let package = Package(
                 ]),
                 .linkedLibrary("c++"),
             ],
-            plugins: ["BuildFFI"]
         ),
 
         .testTarget(
