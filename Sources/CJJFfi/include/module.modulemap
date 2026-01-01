@@ -1,0 +1,4 @@
+module jj_ffiFFI {
+    header "jj_ffiFFI.h"
+    export *
+}

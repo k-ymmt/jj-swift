@@ -1,0 +1,3 @@
+[bindings.swift]
+ffi_module_name = "jj_ffi"
+ffi_module_filename = "jj_ffi"

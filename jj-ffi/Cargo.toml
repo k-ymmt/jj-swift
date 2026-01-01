@@ -1,0 +1,29 @@
+[package]
+name = "jj-ffi"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+name = "jj_ffi"
+
+[features]
+default = ["git"]
+git = ["jj-lib/git"]
+
+[dependencies]
+jj-lib = { path = "./jj/lib", default-features = false }
+uniffi = { version = "0.28", features = ["cli"] }
+thiserror = "1.0"
+once_cell = "1.19"
+pollster = "0.4"
+hex = "0.4"
+toml_edit = "0.23"
+chrono = "0.4"
+
+[build-dependencies]
+uniffi = { version = "0.28", features = ["build"] }
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
