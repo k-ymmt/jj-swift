@@ -6,6 +6,7 @@
 pub mod error;
 #[cfg(feature = "git")]
 pub mod git;
+pub mod log;
 pub mod repo;
 pub mod revset;
 pub mod transaction;
@@ -14,6 +15,7 @@ pub mod workspace;
 
 // Re-export main types for convenience
 pub use error::JjError;
+pub use log::{FfiGraphEdge, FfiGraphEdgeType, FfiLogEntry, FfiLogOptions, FfiLogResult};
 pub use repo::FfiReadonlyRepo;
 pub use transaction::FfiTransaction;
 pub use types::{

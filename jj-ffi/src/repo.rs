@@ -11,6 +11,7 @@ use jj_lib::repo::{ReadonlyRepo, Repo};
 use crate::error::{JjError, Result};
 #[cfg(feature = "git")]
 use crate::git::FfiGitTransaction;
+use crate::log::{FfiLogOptions, FfiLogResult};
 use crate::transaction::FfiTransaction;
 use crate::types::{FfiChangeId, FfiCommit, FfiCommitId};
 
@@ -113,6 +114,32 @@ impl FfiReadonlyRepo {
     /// Count commits matching a revset expression
     pub fn count_revset(&self, revset_str: String, user_email: String) -> Result<u64> {
         crate::revset::count_revset(&self.inner, &revset_str, &user_email)
+    }
+
+    /// Get log with graph information
+    ///
+    /// Returns a list of log entries with commit information and graph edges.
+    /// The entries are ordered topologically (children before parents) unless
+    /// `reversed` is set to true in the options.
+    ///
+    /// # Arguments
+    /// * `options` - Log options including revisions, limit, and ordering
+    /// * `user_email` - User email for revset resolution
+    ///
+    /// # Example revisions
+    /// - `["@"]` - Current working copy
+    /// - `["::"]` - All commits
+    /// - `["main..@"]` - Commits from main to current
+    pub fn log(&self, options: FfiLogOptions, user_email: String) -> Result<FfiLogResult> {
+        crate::log::evaluate_log(&self.inner, &options, &user_email)
+    }
+
+    /// Get log as a flat list without graph information
+    ///
+    /// Returns a list of commits without graph edge information.
+    /// More efficient when graph visualization is not needed.
+    pub fn log_flat(&self, options: FfiLogOptions, user_email: String) -> Result<Vec<FfiCommit>> {
+        crate::log::evaluate_log_flat(&self.inner, &options, &user_email)
     }
 
     /// Start a new transaction for making changes to the repository

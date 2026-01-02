@@ -1,0 +1,29 @@
+[tools]
+rust = "latest"
+"spm:giginet/Scipio" = "latest"
+
+[tasks."build"]
+description = "Build jj-swift"
+depends = ["build:xcframework"]
+
+[tasks."build:xcframework"]
+description = "Build xcframework using Scipio"
+run = "scipio create --enable-library-evolution --framework-type static -f"
+depends = ["build:copy-ffi-interface"]
+
+[tasks."build:ffi"]
+description = "Build ffi interface for Swift"
+run = [
+  "cargo build --release",
+  "cargo run --bin uniffi-bindgen generate --library target/release/libjj_ffi.a --language swift --out-dir generated",
+]
+dir = "jj-ffi"
+
+[tasks."build:copy-ffi-interface"]
+description = "Copy ffi interface to JJSwift"
+depends = ["build:ffi"]
+run = [
+  "cp jj-ffi/generated/jj_ffi.swift Sources/JJSwift/",
+  "cp jj-ffi/generated/jj_ffi.h Sources/CJJFfi/include/",
+  "cp jj-ffi/generated/jj_ffi.modulemap Sources/CJJFfi/include/module.modulemap"
+]

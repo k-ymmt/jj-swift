@@ -321,6 +321,16 @@ RustBuffer uniffi_jj_ffi_fn_method_ffireadonlyrepo_evaluate_revset_to_commits(vo
 RustBuffer uniffi_jj_ffi_fn_method_ffireadonlyrepo_get_commit(void*_Nonnull ptr, RustBuffer commit_id, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JJ_FFI_FN_METHOD_FFIREADONLYREPO_LOG
+#define UNIFFI_FFIDEF_UNIFFI_JJ_FFI_FN_METHOD_FFIREADONLYREPO_LOG
+RustBuffer uniffi_jj_ffi_fn_method_ffireadonlyrepo_log(void*_Nonnull ptr, RustBuffer options, RustBuffer user_email, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JJ_FFI_FN_METHOD_FFIREADONLYREPO_LOG_FLAT
+#define UNIFFI_FFIDEF_UNIFFI_JJ_FFI_FN_METHOD_FFIREADONLYREPO_LOG_FLAT
+RustBuffer uniffi_jj_ffi_fn_method_ffireadonlyrepo_log_flat(void*_Nonnull ptr, RustBuffer options, RustBuffer user_email, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_JJ_FFI_FN_METHOD_FFIREADONLYREPO_RESOLVE_CHANGE_ID
 #define UNIFFI_FFIDEF_UNIFFI_JJ_FFI_FN_METHOD_FFIREADONLYREPO_RESOLVE_CHANGE_ID
 RustBuffer uniffi_jj_ffi_fn_method_ffireadonlyrepo_resolve_change_id(void*_Nonnull ptr, RustBuffer change_id, RustCallStatus *_Nonnull out_status
@@ -806,6 +816,18 @@ uint16_t uniffi_jj_ffi_checksum_method_ffireadonlyrepo_evaluate_revset_to_commit
 #ifndef UNIFFI_FFIDEF_UNIFFI_JJ_FFI_CHECKSUM_METHOD_FFIREADONLYREPO_GET_COMMIT
 #define UNIFFI_FFIDEF_UNIFFI_JJ_FFI_CHECKSUM_METHOD_FFIREADONLYREPO_GET_COMMIT
 uint16_t uniffi_jj_ffi_checksum_method_ffireadonlyrepo_get_commit(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JJ_FFI_CHECKSUM_METHOD_FFIREADONLYREPO_LOG
+#define UNIFFI_FFIDEF_UNIFFI_JJ_FFI_CHECKSUM_METHOD_FFIREADONLYREPO_LOG
+uint16_t uniffi_jj_ffi_checksum_method_ffireadonlyrepo_log(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_JJ_FFI_CHECKSUM_METHOD_FFIREADONLYREPO_LOG_FLAT
+#define UNIFFI_FFIDEF_UNIFFI_JJ_FFI_CHECKSUM_METHOD_FFIREADONLYREPO_LOG_FLAT
+uint16_t uniffi_jj_ffi_checksum_method_ffireadonlyrepo_log_flat(void
     
 );
 #endif

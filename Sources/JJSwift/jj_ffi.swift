@@ -7,8 +7,8 @@ import Foundation
 // Depending on the consumer's build setup, the low-level FFI code
 // might be in a separate module, or it might be compiled inline into
 // this module. This is a bit of light hackery to work with both.
-#if canImport(jj_ffiFFI)
-import jj_ffiFFI
+#if canImport(jj_ffi)
+import jj_ffi
 #endif
 
 fileprivate extension RustBuffer {
@@ -769,6 +769,32 @@ public protocol FfiReadonlyRepoProtocol : AnyObject {
     func getCommit(commitId: FfiCommitId) throws  -> FfiCommit
     
     /**
+     * Get log with graph information
+     *
+     * Returns a list of log entries with commit information and graph edges.
+     * The entries are ordered topologically (children before parents) unless
+     * `reversed` is set to true in the options.
+     *
+     * # Arguments
+     * * `options` - Log options including revisions, limit, and ordering
+     * * `user_email` - User email for revset resolution
+     *
+     * # Example revisions
+     * - `["@"]` - Current working copy
+     * - `["::"]` - All commits
+     * - `["main..@"]` - Commits from main to current
+     */
+    func log(options: FfiLogOptions, userEmail: String) throws  -> FfiLogResult
+    
+    /**
+     * Get log as a flat list without graph information
+     *
+     * Returns a list of commits without graph edge information.
+     * More efficient when graph visualization is not needed.
+     */
+    func logFlat(options: FfiLogOptions, userEmail: String) throws  -> [FfiCommit]
+    
+    /**
      * Resolve a change ID to commit IDs
      */
     func resolveChangeId(changeId: FfiChangeId) throws  -> [FfiCommitId]
@@ -901,6 +927,46 @@ open func getCommit(commitId: FfiCommitId)throws  -> FfiCommit {
     return try  FfiConverterTypeFfiCommit.lift(try rustCallWithError(FfiConverterTypeJjError.lift) {
     uniffi_jj_ffi_fn_method_ffireadonlyrepo_get_commit(self.uniffiClonePointer(),
         FfiConverterTypeFfiCommitId.lower(commitId),$0
+    )
+})
+}
+    
+    /**
+     * Get log with graph information
+     *
+     * Returns a list of log entries with commit information and graph edges.
+     * The entries are ordered topologically (children before parents) unless
+     * `reversed` is set to true in the options.
+     *
+     * # Arguments
+     * * `options` - Log options including revisions, limit, and ordering
+     * * `user_email` - User email for revset resolution
+     *
+     * # Example revisions
+     * - `["@"]` - Current working copy
+     * - `["::"]` - All commits
+     * - `["main..@"]` - Commits from main to current
+     */
+open func log(options: FfiLogOptions, userEmail: String)throws  -> FfiLogResult {
+    return try  FfiConverterTypeFfiLogResult.lift(try rustCallWithError(FfiConverterTypeJjError.lift) {
+    uniffi_jj_ffi_fn_method_ffireadonlyrepo_log(self.uniffiClonePointer(),
+        FfiConverterTypeFfiLogOptions.lower(options),
+        FfiConverterString.lower(userEmail),$0
+    )
+})
+}
+    
+    /**
+     * Get log as a flat list without graph information
+     *
+     * Returns a list of commits without graph edge information.
+     * More efficient when graph visualization is not needed.
+     */
+open func logFlat(options: FfiLogOptions, userEmail: String)throws  -> [FfiCommit] {
+    return try  FfiConverterSequenceTypeFfiCommit.lift(try rustCallWithError(FfiConverterTypeJjError.lift) {
+    uniffi_jj_ffi_fn_method_ffireadonlyrepo_log_flat(self.uniffiClonePointer(),
+        FfiConverterTypeFfiLogOptions.lower(options),
+        FfiConverterString.lower(userEmail),$0
     )
 })
 }
@@ -2045,6 +2111,330 @@ public func FfiConverterTypeFfiGitPushStats_lower(_ value: FfiGitPushStats) -> R
 
 
 /**
+ * A graph edge connecting to a parent commit
+ */
+public struct FfiGraphEdge {
+    /**
+     * The target commit ID (parent)
+     */
+    public var target: FfiCommitId
+    /**
+     * The type of edge
+     */
+    public var edgeType: FfiGraphEdgeType
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The target commit ID (parent)
+         */target: FfiCommitId, 
+        /**
+         * The type of edge
+         */edgeType: FfiGraphEdgeType) {
+        self.target = target
+        self.edgeType = edgeType
+    }
+}
+
+
+
+extension FfiGraphEdge: Equatable, Hashable {
+    public static func ==(lhs: FfiGraphEdge, rhs: FfiGraphEdge) -> Bool {
+        if lhs.target != rhs.target {
+            return false
+        }
+        if lhs.edgeType != rhs.edgeType {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(target)
+        hasher.combine(edgeType)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFfiGraphEdge: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FfiGraphEdge {
+        return
+            try FfiGraphEdge(
+                target: FfiConverterTypeFfiCommitId.read(from: &buf), 
+                edgeType: FfiConverterTypeFfiGraphEdgeType.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: FfiGraphEdge, into buf: inout [UInt8]) {
+        FfiConverterTypeFfiCommitId.write(value.target, into: &buf)
+        FfiConverterTypeFfiGraphEdgeType.write(value.edgeType, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFfiGraphEdge_lift(_ buf: RustBuffer) throws -> FfiGraphEdge {
+    return try FfiConverterTypeFfiGraphEdge.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFfiGraphEdge_lower(_ value: FfiGraphEdge) -> RustBuffer {
+    return FfiConverterTypeFfiGraphEdge.lower(value)
+}
+
+
+/**
+ * A log entry containing commit information and graph edges
+ */
+public struct FfiLogEntry {
+    /**
+     * The commit information
+     */
+    public var commit: FfiCommit
+    /**
+     * Edges to parent commits in the graph
+     */
+    public var edges: [FfiGraphEdge]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * The commit information
+         */commit: FfiCommit, 
+        /**
+         * Edges to parent commits in the graph
+         */edges: [FfiGraphEdge]) {
+        self.commit = commit
+        self.edges = edges
+    }
+}
+
+
+
+extension FfiLogEntry: Equatable, Hashable {
+    public static func ==(lhs: FfiLogEntry, rhs: FfiLogEntry) -> Bool {
+        if lhs.commit != rhs.commit {
+            return false
+        }
+        if lhs.edges != rhs.edges {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(commit)
+        hasher.combine(edges)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFfiLogEntry: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FfiLogEntry {
+        return
+            try FfiLogEntry(
+                commit: FfiConverterTypeFfiCommit.read(from: &buf), 
+                edges: FfiConverterSequenceTypeFfiGraphEdge.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: FfiLogEntry, into buf: inout [UInt8]) {
+        FfiConverterTypeFfiCommit.write(value.commit, into: &buf)
+        FfiConverterSequenceTypeFfiGraphEdge.write(value.edges, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFfiLogEntry_lift(_ buf: RustBuffer) throws -> FfiLogEntry {
+    return try FfiConverterTypeFfiLogEntry.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFfiLogEntry_lower(_ value: FfiLogEntry) -> RustBuffer {
+    return FfiConverterTypeFfiLogEntry.lower(value)
+}
+
+
+/**
+ * Options for log retrieval
+ */
+public struct FfiLogOptions {
+    /**
+     * Revset expressions to evaluate (if empty, uses default)
+     */
+    public var revisions: [String]
+    /**
+     * Maximum number of commits to return (-1 for no limit)
+     */
+    public var limit: Int64
+    /**
+     * Whether to return commits in reverse order (oldest first)
+     */
+    public var reversed: Bool
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Revset expressions to evaluate (if empty, uses default)
+         */revisions: [String], 
+        /**
+         * Maximum number of commits to return (-1 for no limit)
+         */limit: Int64, 
+        /**
+         * Whether to return commits in reverse order (oldest first)
+         */reversed: Bool) {
+        self.revisions = revisions
+        self.limit = limit
+        self.reversed = reversed
+    }
+}
+
+
+
+extension FfiLogOptions: Equatable, Hashable {
+    public static func ==(lhs: FfiLogOptions, rhs: FfiLogOptions) -> Bool {
+        if lhs.revisions != rhs.revisions {
+            return false
+        }
+        if lhs.limit != rhs.limit {
+            return false
+        }
+        if lhs.reversed != rhs.reversed {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(revisions)
+        hasher.combine(limit)
+        hasher.combine(reversed)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFfiLogOptions: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FfiLogOptions {
+        return
+            try FfiLogOptions(
+                revisions: FfiConverterSequenceString.read(from: &buf), 
+                limit: FfiConverterInt64.read(from: &buf), 
+                reversed: FfiConverterBool.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: FfiLogOptions, into buf: inout [UInt8]) {
+        FfiConverterSequenceString.write(value.revisions, into: &buf)
+        FfiConverterInt64.write(value.limit, into: &buf)
+        FfiConverterBool.write(value.reversed, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFfiLogOptions_lift(_ buf: RustBuffer) throws -> FfiLogOptions {
+    return try FfiConverterTypeFfiLogOptions.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFfiLogOptions_lower(_ value: FfiLogOptions) -> RustBuffer {
+    return FfiConverterTypeFfiLogOptions.lower(value)
+}
+
+
+/**
+ * Result of a log operation
+ */
+public struct FfiLogResult {
+    /**
+     * Log entries with graph information
+     */
+    public var entries: [FfiLogEntry]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(
+        /**
+         * Log entries with graph information
+         */entries: [FfiLogEntry]) {
+        self.entries = entries
+    }
+}
+
+
+
+extension FfiLogResult: Equatable, Hashable {
+    public static func ==(lhs: FfiLogResult, rhs: FfiLogResult) -> Bool {
+        if lhs.entries != rhs.entries {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(entries)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFfiLogResult: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FfiLogResult {
+        return
+            try FfiLogResult(
+                entries: FfiConverterSequenceTypeFfiLogEntry.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: FfiLogResult, into buf: inout [UInt8]) {
+        FfiConverterSequenceTypeFfiLogEntry.write(value.entries, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFfiLogResult_lift(_ buf: RustBuffer) throws -> FfiLogResult {
+    return try FfiConverterTypeFfiLogResult.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFfiLogResult_lower(_ value: FfiLogResult) -> RustBuffer {
+    return FfiConverterTypeFfiLogResult.lower(value)
+}
+
+
+/**
  * Input data for creating a new commit via FFI
  */
 public struct FfiNewCommit {
@@ -2437,6 +2827,89 @@ public func FfiConverterTypeFfiTimestamp_lower(_ value: FfiTimestamp) -> RustBuf
     return FfiConverterTypeFfiTimestamp.lower(value)
 }
 
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+/**
+ * Graph edge type exposed via FFI
+ */
+
+public enum FfiGraphEdgeType {
+    
+    /**
+     * Direct parent-child relationship
+     */
+    case direct
+    /**
+     * Indirect relationship (some commits in between are elided)
+     */
+    case indirect
+    /**
+     * Missing parent (incomplete history)
+     */
+    case missing
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFfiGraphEdgeType: FfiConverterRustBuffer {
+    typealias SwiftType = FfiGraphEdgeType
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FfiGraphEdgeType {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+        
+        case 1: return .direct
+        
+        case 2: return .indirect
+        
+        case 3: return .missing
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: FfiGraphEdgeType, into buf: inout [UInt8]) {
+        switch value {
+        
+        
+        case .direct:
+            writeInt(&buf, Int32(1))
+        
+        
+        case .indirect:
+            writeInt(&buf, Int32(2))
+        
+        
+        case .missing:
+            writeInt(&buf, Int32(3))
+        
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFfiGraphEdgeType_lift(_ buf: RustBuffer) throws -> FfiGraphEdgeType {
+    return try FfiConverterTypeFfiGraphEdgeType.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFfiGraphEdgeType_lower(_ value: FfiGraphEdgeType) -> RustBuffer {
+    return FfiConverterTypeFfiGraphEdgeType.lower(value)
+}
+
+
+
+extension FfiGraphEdgeType: Equatable, Hashable {}
+
+
+
 
 /**
  * Unified error type exposed via FFI
@@ -2721,6 +3194,56 @@ fileprivate struct FfiConverterSequenceTypeFfiCommitId: FfiConverterRustBuffer {
         return seq
     }
 }
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeFfiGraphEdge: FfiConverterRustBuffer {
+    typealias SwiftType = [FfiGraphEdge]
+
+    public static func write(_ value: [FfiGraphEdge], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeFfiGraphEdge.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [FfiGraphEdge] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [FfiGraphEdge]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeFfiGraphEdge.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeFfiLogEntry: FfiConverterRustBuffer {
+    typealias SwiftType = [FfiLogEntry]
+
+    public static func write(_ value: [FfiLogEntry], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeFfiLogEntry.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [FfiLogEntry] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [FfiLogEntry]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeFfiLogEntry.read(from: &buf))
+        }
+        return seq
+    }
+}
 /**
  * Get abandoned commit IDs from import stats
  */
@@ -2808,6 +3331,12 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_jj_ffi_checksum_method_ffireadonlyrepo_get_commit() != 24369) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_jj_ffi_checksum_method_ffireadonlyrepo_log() != 14835) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_jj_ffi_checksum_method_ffireadonlyrepo_log_flat() != 21793) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_jj_ffi_checksum_method_ffireadonlyrepo_resolve_change_id() != 25220) {

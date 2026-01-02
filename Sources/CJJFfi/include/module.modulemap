@@ -1,4 +1,4 @@
-module jj_ffiFFI {
-    header "jj_ffiFFI.h"
+module jj_ffi {
+    header "jj_ffi.h"
     export *
 }
